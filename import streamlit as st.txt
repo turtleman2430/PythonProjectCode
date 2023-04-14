@@ -1,0 +1,54 @@
+import streamlit as st
+import requests
+
+st.set_page_config(
+    page_title="Cryptocurrencies",
+    page_icon="Hello",
+    layout="centered",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'About': 'https://www.google.com',
+        'Get Help': 'https://www.bing.com'
+    }
+)
+page_background = f"""
+    <style>
+    [data-testId-"stAppViewContainer"] > .main {{
+    background-color: #ffc000;
+    }}
+    </style>
+"""
+
+st.markdown(page_background,unsafe_allow_html=True)
+st.header("Cryptocurrency Website")
+st.write("")
+st.write("")
+
+st.subheader("Cryptocurrency price updates:")
+response = requests.get('https://api.coinpaprika.com/v1/')
+st.write(response)
+
+crypto = st.selectbox("Choose a cryptocurrency please",
+                        options=["Bitcoin","Ethereum","Litecoin"])
+if crypto == "Bitcoin":
+    url = "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"
+    response = requests.get(url).json()
+    value = response["USD"]
+    st.success(f"The current price of bitcoin is US$ {value}")
+
+if crypto == "Ethereum":
+    url = "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
+    response = requests.get(url).json()
+    value = response["USD"]
+    st.success(f"The current price of ethereum is US$ {value}")
+
+if crypto == "Litecoin":
+    url = "https://min-api.cryptocompare.com/data/price?fsym=LTC&tsyms=USD"
+    response = requests.get(url).json()
+    value = response["USD"]
+    st.success(f"The current price of litecoin is US$ {value}")
+
+st.write("")
+st.subheader("Cryptocurrency Volume:")
+crypto2 = st.selectbox("Choose a cryptocurrency",
+                        options=["Bitcoin","Ethereum","Litecoin"])
