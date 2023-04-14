@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>main.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6a8759;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+main.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">streamlit </span><span class="s0">as </span><span class="s1">st</span>
+<span class="s0">import </span><span class="s1">requests</span>
+
+<span class="s1">st.set_page_config(</span>
+    <span class="s1">page_title=</span><span class="s2">&quot;Cryptocurrencies&quot;</span><span class="s0">,</span>
+    <span class="s1">page_icon=</span><span class="s2">&quot;Hello&quot;</span><span class="s0">,</span>
+    <span class="s1">layout=</span><span class="s2">&quot;centered&quot;</span><span class="s0">,</span>
+    <span class="s1">initial_sidebar_state=</span><span class="s2">&quot;expanded&quot;</span><span class="s0">,</span>
+    <span class="s1">menu_items={</span>
+        <span class="s2">'About'</span><span class="s1">: </span><span class="s2">'https://www.google.com'</span><span class="s0">,</span>
+        <span class="s2">'Get Help'</span><span class="s1">: </span><span class="s2">'https://www.bing.com'</span>
+    <span class="s1">}</span>
+<span class="s1">)</span>
+<span class="s1">page_background = </span><span class="s2">f&quot;&quot;&quot;</span>
+    <span class="s2">&lt;style&gt;</span>
+    <span class="s2">[data-testId-&quot;stAppViewContainer&quot;] &gt; .main </span><span class="s0">{{</span>
+    <span class="s2">background-color: #ffc000;</span>
+    <span class="s0">}}</span>
+    <span class="s2">&lt;/style&gt;</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s1">st.markdown(page_background</span><span class="s0">,</span><span class="s1">unsafe_allow_html=</span><span class="s0">True</span><span class="s1">)</span>
+<span class="s1">st.header(</span><span class="s2">&quot;Cryptocurrency Website&quot;</span><span class="s1">)</span>
+<span class="s1">st.write(</span><span class="s2">&quot;&quot;</span><span class="s1">)</span>
+<span class="s1">st.write(</span><span class="s2">&quot;&quot;</span><span class="s1">)</span>
+
+<span class="s1">st.subheader(</span><span class="s2">&quot;Cryptocurrency price updates:&quot;</span><span class="s1">)</span>
+<span class="s1">response = requests.get(</span><span class="s2">'https://api.coinpaprika.com/v1/'</span><span class="s1">)</span>
+<span class="s1">st.write(response)</span>
+
+<span class="s1">crypto = st.selectbox(</span><span class="s2">&quot;Choose a cryptocurrency please&quot;</span><span class="s0">,</span>
+                        <span class="s1">options=[</span><span class="s2">&quot;Bitcoin&quot;</span><span class="s0">,</span><span class="s2">&quot;Ethereum&quot;</span><span class="s0">,</span><span class="s2">&quot;Litecoin&quot;</span><span class="s1">])</span>
+<span class="s0">if </span><span class="s1">crypto == </span><span class="s2">&quot;Bitcoin&quot;</span><span class="s1">:</span>
+    <span class="s1">url = </span><span class="s2">&quot;https://min-api.cryptocompare.com/data/price?fsym=BTC&amp;tsyms=USD&quot;</span>
+    <span class="s1">response = requests.get(url).json()</span>
+    <span class="s1">value = response[</span><span class="s2">&quot;USD&quot;</span><span class="s1">]</span>
+    <span class="s1">st.success(</span><span class="s2">f&quot;The current price of bitcoin is US$ </span><span class="s0">{</span><span class="s1">value</span><span class="s0">}</span><span class="s2">&quot;</span><span class="s1">)</span>
+
+<span class="s0">if </span><span class="s1">crypto == </span><span class="s2">&quot;Ethereum&quot;</span><span class="s1">:</span>
+    <span class="s1">url = </span><span class="s2">&quot;https://min-api.cryptocompare.com/data/price?fsym=ETH&amp;tsyms=USD&quot;</span>
+    <span class="s1">response = requests.get(url).json()</span>
+    <span class="s1">value = response[</span><span class="s2">&quot;USD&quot;</span><span class="s1">]</span>
+    <span class="s1">st.success(</span><span class="s2">f&quot;The current price of ethereum is US$ </span><span class="s0">{</span><span class="s1">value</span><span class="s0">}</span><span class="s2">&quot;</span><span class="s1">)</span>
+
+<span class="s0">if </span><span class="s1">crypto == </span><span class="s2">&quot;Litecoin&quot;</span><span class="s1">:</span>
+    <span class="s1">url = </span><span class="s2">&quot;https://min-api.cryptocompare.com/data/price?fsym=LTC&amp;tsyms=USD&quot;</span>
+    <span class="s1">response = requests.get(url).json()</span>
+    <span class="s1">value = response[</span><span class="s2">&quot;USD&quot;</span><span class="s1">]</span>
+    <span class="s1">st.success(</span><span class="s2">f&quot;The current price of litecoin is US$ </span><span class="s0">{</span><span class="s1">value</span><span class="s0">}</span><span class="s2">&quot;</span><span class="s1">)</span>
+
+<span class="s1">st.write(</span><span class="s2">&quot;&quot;</span><span class="s1">)</span>
+<span class="s1">st.subheader(</span><span class="s2">&quot;Cryptocurrency Volume:&quot;</span><span class="s1">)</span>
+<span class="s1">crypto2 = st.selectbox(</span><span class="s2">&quot;Choose a cryptocurrency&quot;</span><span class="s0">,</span>
+                        <span class="s1">options=[</span><span class="s2">&quot;Bitcoin&quot;</span><span class="s0">,</span><span class="s2">&quot;Ethereum&quot;</span><span class="s0">,</span><span class="s2">&quot;Litecoin&quot;</span><span class="s1">])</span>
+</pre>
+</body>
+</html>
