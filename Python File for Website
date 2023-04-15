@@ -1,17 +1,32 @@
 import streamlit as st
 import requests
 
+# Set page title and icon
 st.set_page_config(
     page_title="Cryptocurrencies",
     page_icon=":smiley:",
 )
 
-# sets option to change background color in settings
+# sets option to change background color in settings and also centers the header
 st.markdown(
     """
     <style>
-    .css-1aumxhk {
-        background-color: #0077b6;
+    .big-font {
+        font-size: 50px !important;
+        color: white;
+        text-align: center;
+        background-color: darkblue;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 10vh;
+        margin: 0;
+        padding: 0;
+        margin-bottom: 50px;
+    }
+    
+    .subheader {
+        margin-top: 30px !important;
     }
     </style>
     """,
@@ -19,16 +34,19 @@ st.markdown(
 )
 
 # Display the header
-st.header("Cryptocurrency Website")
-st.write("")
-st.write("")
+st.markdown('<p class="big-font">Cypto App</p>', unsafe_allow_html=True)
 
+# Adds spacing after header
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Displays subheader for crypto price updates
 st.subheader("Cryptocurrency price updates:")
 response = requests.get('https://api.coinpaprika.com/v1/')
 st.write(response)
 
+# Displays the selectbox for choosing crptocurrency and its value
 crypto = st.selectbox("Choose a cryptocurrency please",
-                        options=["Bitcoin","Ethereum","Litecoin"])
+                        options=["Bitcoin", "Ethereum", "Litecoin"])
 if crypto == "Bitcoin":
     url = "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"
     response = requests.get(url).json()
@@ -47,8 +65,10 @@ if crypto == "Litecoin":
     value = response["USD"]
     st.success(f"The current price of litecoin is US$ {value}")
 
-st.write("")
+# Adds spacing between the two subheaders
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Displays cryptocurrency volume subheader
 st.subheader("Cryptocurrency Volume:")
 crypto2 = st.selectbox("Choose a cryptocurrency",
-                        options=["Bitcoin","Ethereum","Litecoin"])
-                        
+                        options=["Bitcoin", "Ethereum", "Litecoin"])
