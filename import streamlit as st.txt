@@ -3,23 +3,22 @@ import requests
 
 st.set_page_config(
     page_title="Cryptocurrencies",
-    page_icon="Hello",
-    layout="centered",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'About': 'https://www.google.com',
-        'Get Help': 'https://www.bing.com'
-    }
+    page_icon=":smiley:",
 )
-page_background = f"""
-    <style>
-    [data-testId-"stAppViewContainer"] > .main {{
-    background-color: #ffc000;
-    }}
-    </style>
-"""
 
-st.markdown(page_background,unsafe_allow_html=True)
+# sets option to change background color in settings
+st.markdown(
+    """
+    <style>
+    .css-1aumxhk {
+        background-color: #0077b6;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Display the header
 st.header("Cryptocurrency Website")
 st.write("")
 st.write("")
@@ -52,3 +51,4 @@ st.write("")
 st.subheader("Cryptocurrency Volume:")
 crypto2 = st.selectbox("Choose a cryptocurrency",
                         options=["Bitcoin","Ethereum","Litecoin"])
+                        
