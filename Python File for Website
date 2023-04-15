@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import pandas as pd
+import altair as alt
 
 # Set page title and background color
 st.set_page_config(page_title="Crypto Hub", page_icon=":money_with_wings:", layout="wide",
@@ -25,9 +27,15 @@ cryptos = ["BTC", "ETH", "XRP", "BCH", "LTC"]
 
 # Define function to get current price of a cryptocurrency
 def get_crypto_price(crypto):
-    response = requests.get(f"https://min-api.cryptocompare.com/data/price?fsym={crypto}&tsyms=USD")
-    price = response.json()["USD"]
-    st.success(f"The current price of bitcoin is US$ {price}")
+    url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit=30"
+    response = requests.get(url)
+    data = response.json()["Data"]["Data"]
+    df = pd.DataFrame(data)
+    df['date'] = pd.to_datetime(df['time'], unit='s')
+    df.set_index('date', inplace=True)
+    st.line_chart(df['close'])
+    latest_price = df['close'].iloc[-1]
+    st.success(f"The current price of {crypto} is US$ {latest_price:.2f}")
 
 
 # Define function to get fun facts and recommendations for a cryptocurrency
@@ -50,7 +58,7 @@ def main():
     st.markdown("<h1 style='text-align: center;'>Crypto Hub</h1>", unsafe_allow_html=True)
 
     # Display list of popular cryptocurrencies
-    st.header("Most popular cryptocurrencies")
+    st.subheader("Most popular cryptocurrencies")
     st.write(cryptos)
 
     # Allow user to select a cryptocurrency from a dropdown menu
