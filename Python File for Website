@@ -1,74 +1,71 @@
 import streamlit as st
 import requests
 
-# Set page title and icon
-st.set_page_config(
-    page_title="Cryptocurrencies",
-    page_icon=":smiley:",
-)
-
-# sets option to change background color in settings and also centers the header
+# Set page title and background color
+st.set_page_config(page_title="Crypto Hub", page_icon=":money_with_wings:", layout="wide",
+                   initial_sidebar_state="expanded")
 st.markdown(
     """
     <style>
-    .big-font {
-        font-size: 50px !important;
+    .stApp {
+        background-color: #1e2130;
         color: white;
-        text-align: center;
-        background-color: darkblue;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 10vh;
-        margin: 0;
-        padding: 0;
-        margin-bottom: 50px;
     }
-    
-    .subheader {
-        margin-top: 30px !important;
+    .css-1l4y4im {
+        text-align: center;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Display the header
-st.markdown('<p class="big-font">Cypto App</p>', unsafe_allow_html=True)
+# Define list of popular cryptocurrencies
+cryptos = ["BTC", "ETH", "XRP", "BCH", "LTC"]
 
-# Adds spacing after header
-st.markdown("<br>", unsafe_allow_html=True)
 
-# Displays subheader for crypto price updates
-st.subheader("Cryptocurrency price updates:")
-response = requests.get('https://api.coinpaprika.com/v1/')
-st.write(response)
+# Define function to get current price of a cryptocurrency
+def get_crypto_price(crypto):
+    response = requests.get(f"https://min-api.cryptocompare.com/data/price?fsym={crypto}&tsyms=USD")
+    price = response.json()["USD"]
+    st.success(f"The current price of bitcoin is US$ {price}")
 
-# Displays the selectbox for choosing crptocurrency and its value
-crypto = st.selectbox("Choose a cryptocurrency please",
-                        options=["Bitcoin", "Ethereum", "Litecoin"])
-if crypto == "Bitcoin":
-    url = "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"
-    response = requests.get(url).json()
-    value = response["USD"]
-    st.success(f"The current price of bitcoin is US$ {value}")
 
-if crypto == "Ethereum":
-    url = "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
-    response = requests.get(url).json()
-    value = response["USD"]
-    st.success(f"The current price of ethereum is US$ {value}")
+# Define function to get fun facts and recommendations for a cryptocurrency
+def get_crypto_info(crypto):
+    if crypto == "BTC":
+        return "Bitcoin is the first cryptocurrency and has a maximum supply of 21 million coins. It is currently the most valuable cryptocurrency."
+    elif crypto == "ETH":
+        return "Ethereum is a blockchain platform that enables developers to build decentralized applications (dApps). It has a maximum supply of 18 million coins per year."
+    elif crypto == "XRP":
+        return "XRP is a cryptocurrency created by Ripple Labs. It is designed for cross-border payments and has a maximum supply of 100 billion coins."
+    elif crypto == "BCH":
+        return "Bitcoin Cash is a fork of Bitcoin that was created to improve transaction speed and lower fees. It has a maximum supply of 21 million coins."
+    elif crypto == "LTC":
+        return "Litecoin is a cryptocurrency created by Charlie Lee, a former Google engineer. It is a 'lite' version of Bitcoin with faster transaction speed and lower fees."
 
-if crypto == "Litecoin":
-    url = "https://min-api.cryptocompare.com/data/price?fsym=LTC&tsyms=USD"
-    response = requests.get(url).json()
-    value = response["USD"]
-    st.success(f"The current price of litecoin is US$ {value}")
 
-# Adds spacing between the two subheaders
-st.markdown("<br>", unsafe_allow_html=True)
+# Define Streamlit app
+def main():
+    # This centers the header
+    st.markdown("<h1 style='text-align: center;'>Crypto Hub</h1>", unsafe_allow_html=True)
 
-# Displays cryptocurrency volume subheader
-st.subheader("Cryptocurrency Volume:")
-crypto2 = st.selectbox("Choose a cryptocurrency",
-                        options=["Bitcoin", "Ethereum", "Litecoin"])
+    # Display list of popular cryptocurrencies
+    st.header("Most popular cryptocurrencies")
+    st.write(cryptos)
+
+    # Allow user to select a cryptocurrency from a dropdown menu
+    crypto_selected = st.selectbox("Select a cryptocurrency", cryptos)
+
+    # Display current price of selected cryptocurrency
+    st.subheader(f"Current value of {crypto_selected}")
+    price = get_crypto_price(crypto_selected)
+    st.write(f"${price}")
+
+    # Display fun facts and recommendations for selected cryptocurrency
+    st.header(f"Fun facts and recommendations for {crypto_selected}")
+    info = get_crypto_info(crypto_selected)
+    st.write(info)
+
+
+if __name__ == "__main__":
+    main()
