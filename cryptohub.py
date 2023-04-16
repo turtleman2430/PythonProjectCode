@@ -27,7 +27,7 @@ cryptos = ["BTC", "ETH", "XRP", "BCH", "LTC"]
 
 # Define function to get current price of a cryptocurrency
 def get_crypto_price(crypto):
-    url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit=30"
+    url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit=365"
     response = requests.get(url)
     data = response.json()["Data"]["Data"]
     df = pd.DataFrame(data)
@@ -36,7 +36,7 @@ def get_crypto_price(crypto):
     st.line_chart(df['close'])
     latest_price = df['close'].iloc[-1]
     st.success(f"The current price of {crypto} is US$ {latest_price:.2f}")
-
+    return latest_price
 
 # Define function to get fun facts and recommendations for a cryptocurrency
 def get_crypto_info(crypto):
@@ -59,15 +59,26 @@ def main():
 
     # Display list of popular cryptocurrencies
     st.subheader("Most popular cryptocurrencies")
-    st.write(cryptos)
+    crypto_table_data = {'Cryptocurrency': cryptos}
+    crypto_table = pd.DataFrame(crypto_table_data, columns=['Cryptocurrency'])
+    crypto_table.index = crypto_table.index + 1 # Starts list with 1
+    st.table(crypto_table)
 
     # Allow user to select a cryptocurrency from a dropdown menu
     crypto_selected = st.selectbox("Select a cryptocurrency", cryptos)
 
     # Display current price of selected cryptocurrency
-    st.subheader(f"Current value of {crypto_selected}")
+    if crypto_selected == "BTC":
+        st.subheader("Current value of Bitcoin")
+    if crypto_selected == "ETH":
+        st.subheader("Current value of Ethereum")
+    if crypto_selected == "XRP":
+        st.subheader("Current value of Ripple")
+    if crypto_selected == "BCH":
+        st.subheader("Current value of Bitcoin Cash")
+    if crypto_selected == "LTC":
+        st.subheader("Current value of Litecoin")
     price = get_crypto_price(crypto_selected)
-    st.write(f"${price}")
 
     # Display fun facts and recommendations for selected cryptocurrency
     st.header(f"Fun facts and recommendations for {crypto_selected}")
