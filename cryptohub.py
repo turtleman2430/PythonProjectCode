@@ -22,8 +22,13 @@ st.markdown(
 )
 
 # Define list of popular cryptocurrencies
-cryptos = ["BTC", "ETH", "XRP", "BCH", "LTC"]
-
+cryptos = {
+    "BTC": "Bitcoin",
+    "ETH": "Ethereum",
+    "XRP": "Ripple",
+    "BCH": "Bitcoin Cash",
+    "LTC": "Litecoin"
+}
 
 # Define function to get current price of a cryptocurrency
 def get_crypto_price(crypto):
@@ -33,9 +38,10 @@ def get_crypto_price(crypto):
     df = pd.DataFrame(data)
     df['date'] = pd.to_datetime(df['time'], unit='s')
     df.set_index('date', inplace=True)
-    st.line_chart(df['close'])
     latest_price = df['close'].iloc[-1]
     st.success(f"The current price of {crypto} is US$ {latest_price:.2f}")
+    st.line_chart(df['close'])
+    st.markdown("<br>", unsafe_allow_html=True)
     return latest_price
 
 # Define function to get fun facts and recommendations for a cryptocurrency
@@ -56,34 +62,31 @@ def get_crypto_info(crypto):
 def main():
     # This centers the header
     st.markdown("<h1 style='text-align: center;'>Crypto Hub</h1>", unsafe_allow_html=True)
+    # Add spacing between the header and the subheader
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    # Allow user to select a cryptocurrency from a dropdown menu
+    col1, col2 = st.columns([0.2, 1])
+    with col1:
+        st.markdown("<h3 style='text-align: left;'>Current value of</h3>", unsafe_allow_html=True)
+    with col2:
+        crypto_selected = st.selectbox("", options = {k: f"{k} - {v}" for k, v in cryptos.items()})
+
+    # Display current price of selected cryptocurrency
+    price = get_crypto_price(crypto_selected)
 
     # Display list of popular cryptocurrencies
     st.subheader("Most popular cryptocurrencies")
-    crypto_table_data = {'Cryptocurrency': cryptos}
+    crypto_table_data = {'Cryptocurrency': [f"{k} - {v}" for k, v in cryptos.items()]}
     crypto_table = pd.DataFrame(crypto_table_data, columns=['Cryptocurrency'])
-    crypto_table.index = crypto_table.index + 1 # Starts list with 1
+    crypto_table.index = crypto_table.index + 1  # Starts list with 1
     st.table(crypto_table)
-
-    # Allow user to select a cryptocurrency from a dropdown menu
-    crypto_selected = st.selectbox("Select a cryptocurrency", cryptos)
-
-    # Display current price of selected cryptocurrency
-    if crypto_selected == "BTC":
-        st.subheader("Current value of Bitcoin")
-    if crypto_selected == "ETH":
-        st.subheader("Current value of Ethereum")
-    if crypto_selected == "XRP":
-        st.subheader("Current value of Ripple")
-    if crypto_selected == "BCH":
-        st.subheader("Current value of Bitcoin Cash")
-    if crypto_selected == "LTC":
-        st.subheader("Current value of Litecoin")
-    price = get_crypto_price(crypto_selected)
 
     # Display fun facts and recommendations for selected cryptocurrency
     st.header(f"Fun facts and recommendations for {crypto_selected}")
     info = get_crypto_info(crypto_selected)
     st.write(info)
+
 
 
 if __name__ == "__main__":
