@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 import altair as alt
+import numpy as np
+import pydeck as pdk
 
 # Set page title and background color
 st.set_page_config(page_title="Crypto Hub", page_icon=":money_with_wings:", layout="wide",
@@ -30,6 +32,57 @@ cryptos = {
     "LTC": "Litecoin"
 }
 
+
+def get_crypto_market_map():
+    #url = 'https://api.coinpaprika.com/v1/exchanges'
+    url = 'https://api.coinstats.app/public/v1/markets?coinId=bitcoin'
+    response = requests.get(url)
+    data = response.json()
+    st.json(data)
+
+    
+    countries_data = pd.read_csv("data/country-coord-curr.csv")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.dataframe(countries_data) 
+    with col2:
+        st.map(countries_data)
+    # df = pd.DataFrame(data)
+    chart_data = pd.DataFrame(
+       np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
+       columns=['lat', 'lon'])
+
+    st.pydeck_chart(pdk.Deck(
+        map_style=None,
+        initial_view_state=pdk.ViewState(
+            latitude=37.76,
+            longitude=-122.4,
+            zoom=11,
+            pitch=50,
+        ),
+        layers=[
+            pdk.Layer(
+               'HexagonLayer',
+               data=chart_data,
+               get_position='[lon, lat]',
+               radius=200,
+               elevation_scale=4,
+               elevation_range=[0, 1000],
+               pickable=True,
+               extruded=True,
+            )        ],
+    ))
+
+'''
+         pdk.Layer(
+                'ScatterplotLayer',
+                data=chart_data,
+                get_position='[lon, lat]',
+                get_color='[200, 30, 0, 160]',
+                get_radius=200,
+            ),
+'''
 # Define function to get current price of a cryptocurrency
 def get_crypto_price(crypto):
     url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit=365"
@@ -87,7 +140,8 @@ def main():
     info = get_crypto_info(crypto_selected)
     st.write(info)
 
-
+    # Crypto market anlysis and map
+    get_crypto_market_map()
 
 if __name__ == "__main__":
     main()
