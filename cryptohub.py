@@ -31,8 +31,10 @@ cryptos = {
 }
 
 # Define function to get current price of a cryptocurrency
-def get_crypto_price(crypto):
-    url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit=365"
+def get_crypto_price(crypto, time_frame):
+    time_frames = {"day": 1, "week": 7, "month": 30, "year": 365, "5year": 1825}
+    limit = time_frames[time_frame]
+    url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit={limit}"
     response = requests.get(url)
     data = response.json()["Data"]["Data"]
     df = pd.DataFrame(data)
@@ -44,18 +46,21 @@ def get_crypto_price(crypto):
     st.markdown("<br>", unsafe_allow_html=True)
     return latest_price
 
+
+
 # Define function to get fun facts and recommendations for a cryptocurrency
 def get_crypto_info(crypto):
     if crypto == "BTC":
-        return "Bitcoin is the first cryptocurrency and has a maximum supply of 21 million coins. It is currently the most valuable cryptocurrency."
+        return "Bitcoin is the first cryptocurrency and has a maximum supply of 21 million coins. It is currently the most valuable cryptocurrency. Bitcoin prices can be volatile, and it's important not to make investment decisions based solely on emotions like fear and greed. Always do your research and make informed decisions."
     elif crypto == "ETH":
-        return "Ethereum is a blockchain platform that enables developers to build decentralized applications (dApps). It has a maximum supply of 18 million coins per year."
+        return "Ethereum is a blockchain platform that enables developers to build decentralized applications (dApps). It has a maximum supply of 18 million coins per year. Like all cryptocurrencies, Ethereum prices can be volatile, and it's important not to make investment decisions based solely on emotions like fear and greed. Always do your research and make informed decisions."
     elif crypto == "XRP":
-        return "XRP is a cryptocurrency created by Ripple Labs. It is designed for cross-border payments and has a maximum supply of 100 billion coins."
+        return "XRP is a cryptocurrency created by Ripple Labs. It is designed for cross-border payments and has a maximum supply of 100 billion coins. XRP prices can be volatile, and its value may be affected by factors such as regulatory changes and competition from other payment systems. Always invest only what you can afford to lose, and consider diversifying your portfolio with other assets."
     elif crypto == "BCH":
-        return "Bitcoin Cash is a fork of Bitcoin that was created to improve transaction speed and lower fees. It has a maximum supply of 21 million coins."
+        return "Bitcoin Cash is a fork of Bitcoin that was created to improve transaction speed and lower fees. It has a maximum supply of 21 million coins. Make sure to buy and store your Bitcoin Cash on a reputable exchange that prioritizes security and has a good reputation in the cryptocurrency community."
     elif crypto == "LTC":
-        return "Litecoin is a cryptocurrency created by Charlie Lee, a former Google engineer. It is a 'lite' version of Bitcoin with faster transaction speed and lower fees."
+        return "Litecoin is a cryptocurrency created by Charlie Lee, a former Google engineer. It is a 'lite' version of Bitcoin with faster transaction speed and lower fees. When buying or trading Litecoin, make sure to use a reputable cryptocurrency exchange with a good track record for security and customer support."
+
 
 
 # Define Streamlit app
@@ -68,12 +73,13 @@ def main():
     # Allow user to select a cryptocurrency from a dropdown menu
     col1, col2 = st.columns([0.2, 1])
     with col1:
-        st.markdown("<h3 style='text-align: left;'>Current value of</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: left; padding-top: 35px;'>Current value of</h3>", unsafe_allow_html=True)
     with col2:
         crypto_selected = st.selectbox("", options = {k: f"{k} - {v}" for k, v in cryptos.items()})
 
     # Display current price of selected cryptocurrency
-    price = get_crypto_price(crypto_selected)
+    time_frame = st.radio("Select a time frame:", ["day", "week", "month", "year", "5year"], index=3)
+    price = get_crypto_price(crypto_selected, time_frame)
 
     # Display list of popular cryptocurrencies
     st.subheader("Most popular cryptocurrencies")
@@ -87,7 +93,4 @@ def main():
     info = get_crypto_info(crypto_selected)
     st.write(info)
 
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
