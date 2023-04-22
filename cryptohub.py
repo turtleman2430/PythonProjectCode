@@ -32,57 +32,107 @@ cryptos = {
     "LTC": "Litecoin"
 }
 
-
+coinstats_api = {
+    "exchanges": "https://api.coinstats.app/public/v1/exchanges",
+    "markets": "https://api.coinstats.app/public/v1/markets"
+}
 def get_crypto_market_map():
-    #url = 'https://api.coinpaprika.com/v1/exchanges'
-    url = 'https://api.coinstats.app/public/v1/markets?coinId=bitcoin'
-    response = requests.get(url)
-    data = response.json()
-    st.json(data)
-
-    
-    countries_data = pd.read_csv("data/country-coord-curr.csv")
+    #define 2 coloumn layout    
     col1, col2 = st.columns(2)
 
+    # COLUMN1 
+    #get exchange list for multiselect 
+    exchange_list      = requests.get(coinstats_api['exchanges']).json()
+    exchange_dataframe = np.transpose(exchange_list['supportedExchanges'])
+
+    #get generated country coord data
+    countries_data = pd.read_csv("data/country-coord-curr.csv")
+    #st.dataframe(countries_data) #debug
+    selected_markets = None
+
     with col1:
-        st.dataframe(countries_data) 
-    with col2:
-        st.map(countries_data)
-    # df = pd.DataFrame(data)
-    chart_data = pd.DataFrame(
-       np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
-       columns=['lat', 'lon'])
+        
+        #ask use for exchanges of interest
+        selected_markets = st.multiselect("Select any exchanges you are curious about.",
+                           exchange_dataframe,
+                           default=[
+                                "Binance",
+                                "Kraken"],
+                           key=None,
+                           help=None,
+                           on_change=None,
+                           args=None,
+                           kwargs=None,
+                           disabled=False,
+                           label_visibility="visible",
+                           max_selections=None)
+        if len(selected_markets) == 0:
+            st.error("you must select at least one exchange")
+        else:
+            st.info("ploting exchange data")
 
-    st.pydeck_chart(pdk.Deck(
-        map_style=None,
-        initial_view_state=pdk.ViewState(
-            latitude=37.76,
-            longitude=-122.4,
-            zoom=11,
-            pitch=50,
-        ),
-        layers=[
-            pdk.Layer(
-               'HexagonLayer',
-               data=chart_data,
-               get_position='[lon, lat]',
-               radius=200,
-               elevation_scale=4,
-               elevation_range=[0, 1000],
-               pickable=True,
-               extruded=True,
-            )        ],
-    ))
 
-'''
-         pdk.Layer(
-                'ScatterplotLayer',
-                data=chart_data,
-                get_position='[lon, lat]',
-                get_color='[200, 30, 0, 160]',
-                get_radius=200,
-            ),
-'''
+    # COLUMN2
+    if len(selected_markets) > 0:
+        #get exchange list for multiselect 
+        #get all the markets 
+        market_list = requests.get(coinstats_api['markets']+'?coinId=bitcoin').json()
+        market_dataframe = pd.DataFrame(market_list)
+        
+        #cull echanges that user is NOT interested in
+        market_dataframe = market_dataframe[market_dataframe['exchange'].isin(selected_markets)]
+        market_dataframe[['from', 'to']] = market_dataframe['pair'].str.split('/', 1, expand=True)
+        market_dataframe.drop(columns=['pair'], inplace=True)
+
+        #cull non-plotables
+        fiat_currencies = countries_data['currency code'].tolist()
+
+        market_dataframe = market_dataframe[market_dataframe['to'].isin(fiat_currencies)]
+        #NOTE: there are multible countries that may use a given currency
+        #      this literaly doesnt care where the currency originated from
+        #      it just get whatever country is seen first with a given currency code
+        #      and pushes that country's coordinates.
+        #TODO: push all country coordinates that use a given currency and have the market
+        #      dataframe make duplicate entries for all those countries. 
+        coord_dataframe = pd.DataFrame([
+                [countries_data.loc[countries_data['currency code'] == fiat_curr, 'lat'].iloc[0],
+                 countries_data.loc[countries_data['currency code'] == fiat_curr, 'lon'].iloc[0]]
+                for fiat_curr in market_dataframe['to'].tolist()], columns=['lat','lon'])
+        #st.dataframe(coord_dataframe) #debug
+
+        #st.dataframe(market_dataframe.reset_index()) #debug
+        market_dataframe = pd.merge(market_dataframe.reset_index(),
+                                    coord_dataframe,
+                                    left_index=True,
+                                    right_index=True)
+        #st.dataframe(market_dataframe) #debug
+
+        with col2:
+            st.pydeck_chart(pdk.Deck(
+                map_style=None,
+                initial_view_state=pdk.ViewState(
+                    latitude=37.76,
+                    longitude=-122.4,
+                    zoom=.001,
+                    pitch=90,
+                ),
+                layers=[
+                pdk.Layer(
+                       'ColumnLayer',
+                       data=market_dataframe,
+                       diskResolution=32,
+                       get_position='[lon, lat]',
+                       radius=600000,
+                       get_elevation='[pairPrice]',
+                       elevation_scale=1,
+                       elevation_range=[0, 10000],
+                       pickable=True,
+                       extruded=True,
+                       get_color='[200, 30, 0, 160]',
+                       )
+                    ],
+            ))
+
 # Define function to get current price of a cryptocurrency
 def get_crypto_price(crypto):
     url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={crypto}&tsym=USD&limit=365"

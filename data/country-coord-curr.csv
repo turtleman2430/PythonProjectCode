@@ -1,4 +1,4 @@
-,Country,Country code,Currency code,latitude,longitude
+id,country,country code,currency code,lat,lon
 4,American Samoa,AS,USD,-14.33,-170.0
 5,Andorra,AD,EUR,42.5,1.5
 11,Argentina,AR,ARS,-34.0,-64.0
