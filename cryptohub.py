@@ -54,17 +54,17 @@ def market_dataframe_color_rows(entry, column):
 # MAIN UI
 def get_crypto_hub_feedback(): 
     st.select_slider(label="Give a rating",
-                    options=["informative",
+                    options=["bad",
                              "good",
                              "excelent",
-                             "exceded my expectations"])
+                             ])
     col1, col2 = st.columns([0.4, 1])
     with col1:
         st.text_area("Comments")
     with col2:
         st.button("Submit Feedback")
 
-def get_crypto_market_map():
+def get_crypto_market_map(crypto):
     #define 2 coloumn layout    
     col1, col2 = st.columns(2)
 
@@ -102,7 +102,16 @@ def get_crypto_market_map():
         if len(selected_markets) > 0:
             #get exchange list for multiselect 
             #get all the markets 
-            market_list = requests.get(coinstats_api['markets']+'?coinId=bitcoin').json()
+            res = requests.get(coinstats_api['markets']+f'?coinId={crypto}')
+            if res.ok==False:
+                st.error(f"no data available on this currency, {crypto}")
+                return
+            
+            market_list = res.json()
+            if len(market_list)==0:
+                st.error(f"no data available on this currency, {crypto}")
+                return
+
             market_dataframe = pd.DataFrame(market_list)
             
             #cull echanges that user is NOT interested in
@@ -245,7 +254,7 @@ def main():
     
     # Display exchanges and map of prices differnces
     st.header(f"Exchanges")
-    get_crypto_market_map()
+    get_crypto_market_map(cryptos[crypto_selected].lower())
 
     # Display feedback
     st.header(f"Your Feedback is Appreciated")
