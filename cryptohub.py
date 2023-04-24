@@ -4,6 +4,7 @@ import pandas as pd
 import altair as alt
 import numpy as np
 import pydeck as pdk
+from colorhash import ColorHash
 
 # Set page title and background color
 st.set_page_config(page_title="Crypto Hub", page_icon=":money_with_wings:", layout="wide",
@@ -36,6 +37,33 @@ coinstats_api = {
     "exchanges": "https://api.coinstats.app/public/v1/exchanges",
     "markets": "https://api.coinstats.app/public/v1/markets"
 }
+
+# HELPERS
+def market_dataframe_color_rows(entry, column):
+    colors = pd.Series(data=False, index=entry.index)
+    cr = entry[column[0]]
+    cg = entry[column[1]]
+    cb = entry[column[2]]
+    #for v in colors]
+    col = [cr,cg,cb]
+    strcolor = ''.join([str(ch)+',' for ch in col])
+    strcolor = strcolor[:-1]
+    return [f'background-color: rgba({strcolor}, 10)' for x in colors]
+
+
+# MAIN UI
+def get_crypto_hub_feedback(): 
+    st.select_slider(label="Give a rating",
+                    options=["informative",
+                             "good",
+                             "excelent",
+                             "exceded my expectations"])
+    col1, col2 = st.columns([0.4, 1])
+    with col1:
+        st.text_area("Comments")
+    with col2:
+        st.button("Submit Feedback")
+
 def get_crypto_market_map():
     #define 2 coloumn layout    
     col1, col2 = st.columns(2)
@@ -49,15 +77,19 @@ def get_crypto_market_map():
     countries_data = pd.read_csv("data/country-coord-curr.csv")
     #st.dataframe(countries_data) #debug
     selected_markets = None
-
+    market_dataframe = None
+    data_of_interest = None
     with col1:
-        
+        st.write("Exchanges are business that give cusotmers platform to trade cryptocutrences for other digital currencies and even fiat currencies")
         #ask use for exchanges of interest
         selected_markets = st.multiselect("Select any exchanges you are curious about.",
                            exchange_dataframe,
                            default=[
                                 "Binance",
-                                "Kraken"],
+                                "Kraken",
+                                "Whitebit",
+                                "Upbit",
+                                "OKEX"],
                            key=None,
                            help=None,
                            on_change=None,
@@ -66,55 +98,64 @@ def get_crypto_market_map():
                            disabled=False,
                            label_visibility="visible",
                            max_selections=None)
-        if len(selected_markets) == 0:
-            st.error("you must select at least one exchange")
-        else:
-            st.info("ploting exchange data")
 
+        if len(selected_markets) > 0:
+            #get exchange list for multiselect 
+            #get all the markets 
+            market_list = requests.get(coinstats_api['markets']+'?coinId=bitcoin').json()
+            market_dataframe = pd.DataFrame(market_list)
+            
+            #cull echanges that user is NOT interested in
+            market_dataframe = market_dataframe[market_dataframe['exchange'].isin(selected_markets)]
+            market_dataframe[['from', 'to']] = market_dataframe['pair'].str.split('/', 1, expand=True)
+            market_dataframe.drop(columns=['pair'], inplace=True)
 
-    # COLUMN2
-    if len(selected_markets) > 0:
-        #get exchange list for multiselect 
-        #get all the markets 
-        market_list = requests.get(coinstats_api['markets']+'?coinId=bitcoin').json()
-        market_dataframe = pd.DataFrame(market_list)
-        
-        #cull echanges that user is NOT interested in
-        market_dataframe = market_dataframe[market_dataframe['exchange'].isin(selected_markets)]
-        market_dataframe[['from', 'to']] = market_dataframe['pair'].str.split('/', 1, expand=True)
-        market_dataframe.drop(columns=['pair'], inplace=True)
+            #cull non-plotables
+            fiat_currencies = countries_data['currency code'].tolist()
 
-        #cull non-plotables
-        fiat_currencies = countries_data['currency code'].tolist()
+            market_dataframe = market_dataframe[market_dataframe['to'].isin(fiat_currencies)]
+            #NOTE: there are multible countries that may use a given currency
+            #      this literaly doesnt care where the currency originated from
+            #      it just get whatever country is seen first with a given currency code
+            #      and pushes that country's coordinates.
+            #TODO: push all country coordinates that use a given currency and have the market
+            #      dataframe make duplicate entries for all those countries. 
+            coord_dataframe = pd.DataFrame([
+                    [countries_data.loc[countries_data['currency code'] == fiat_curr, 'lat'].iloc[0],
+                     countries_data.loc[countries_data['currency code'] == fiat_curr, 'lon'].iloc[0]]
+                    for fiat_curr in market_dataframe['to'].tolist()], columns=['lat','lon'])
 
-        market_dataframe = market_dataframe[market_dataframe['to'].isin(fiat_currencies)]
-        #NOTE: there are multible countries that may use a given currency
-        #      this literaly doesnt care where the currency originated from
-        #      it just get whatever country is seen first with a given currency code
-        #      and pushes that country's coordinates.
-        #TODO: push all country coordinates that use a given currency and have the market
-        #      dataframe make duplicate entries for all those countries. 
-        coord_dataframe = pd.DataFrame([
-                [countries_data.loc[countries_data['currency code'] == fiat_curr, 'lat'].iloc[0],
-                 countries_data.loc[countries_data['currency code'] == fiat_curr, 'lon'].iloc[0]]
-                for fiat_curr in market_dataframe['to'].tolist()], columns=['lat','lon'])
-        #st.dataframe(coord_dataframe) #debug
-
-        #st.dataframe(market_dataframe.reset_index()) #debug
-        market_dataframe = pd.merge(market_dataframe.reset_index(),
-                                    coord_dataframe,
-                                    left_index=True,
-                                    right_index=True)
-        #st.dataframe(market_dataframe) #debug
+            #st.dataframe(market_dataframe.reset_index()) #debug
+            # Get color for Exchage by hashing exchange name string
+            colors_dataframe = pd.DataFrame([ ColorHash(exch).rgb for exch in market_dataframe['exchange'].tolist()],
+                     columns=['r','g','b'])
+            #st.dataframe(colors_dataframe) #debug
+            market_dataframe = pd.merge(market_dataframe.reset_index(),
+                                        coord_dataframe,
+                                        left_index=True,
+                                        right_index=True)
+            market_dataframe = pd.merge(market_dataframe.reset_index(),
+                                        colors_dataframe,
+                                        left_index=True,
+                                        right_index=True)
+            data_of_interest = st.radio(label="choose data point to plot on map", options = ['pairPrice', 'price', 'volume'])
+            ascending = st.checkbox("Sort in Ascending Order")
+            market_dataframe.sort_values(by=[data_of_interest],
+                                         ascending=ascending,
+                                         inplace=True)
+            
+            display_dataframe = market_dataframe.drop(columns=['level_0','index', 'lon', 'lat']) # 'r', 'g', 'b']
+            styler = display_dataframe.style.apply(market_dataframe_color_rows, column=['r','g','b'], axis=1)
+            st.table(styler)
 
         with col2:
             st.pydeck_chart(pdk.Deck(
                 map_style=None,
                 initial_view_state=pdk.ViewState(
-                    latitude=37.76,
-                    longitude=-122.4,
-                    zoom=.001,
-                    pitch=90,
+                    latitude=40.76,
+                    longitude=0.0,
+                    zoom=0.8,
+                    pitch=40,
                 ),
                 layers=[
                 pdk.Layer(
@@ -123,15 +164,21 @@ def get_crypto_market_map():
                        diskResolution=32,
                        get_position='[lon, lat]',
                        radius=600000,
-                       get_elevation='[pairPrice]',
+                       get_elevation=f'[{data_of_interest}]',
                        elevation_scale=1,
                        elevation_range=[0, 10000],
                        pickable=True,
                        extruded=True,
-                       get_color='[200, 30, 0, 160]',
+                       get_color='[r, g, b, 100]',
                        )
                     ],
             ))
+            if len(selected_markets) == 0:
+                st.error("you must select at least one exchange")
+            else:
+                st.info("ploting exchange data")
+
+
 
 # Define function to get current price of a cryptocurrency
 def get_crypto_price(crypto, time_frame):
@@ -195,6 +242,14 @@ def main():
     st.header(f"Fun facts and recommendations for {crypto_selected}")
     info = get_crypto_info(crypto_selected)
     st.write(info)
+    
+    # Display exchanges and map of prices differnces
+    st.header(f"Exchanges")
+    get_crypto_market_map()
 
-if __name__ == "__main__": main()
-
+    # Display feedback
+    st.header(f"Your Feedback is Appreciated")
+    get_crypto_hub_feedback()
+    
+if __name__ == "__main__":
+    main()
